@@ -246,7 +246,8 @@ def sync(c: Cluster) -> dict[str, list[dict]]:
          "spec": {"interval": "30s", "url": GIT_URL, "ref": {"branch": "main"}}},
         ks("operators", True),
         ks("config", False, ["operators"]),   # the CRDs come with the operators
-        ks("lifecycle", True),
+        # the node rollout starts only once the operators and the per-pool CRs of this commit are applied
+        ks("lifecycle", True, ["config"]),
     ]}
 
 
