@@ -57,6 +57,12 @@ class Render(unittest.TestCase):
         a2 = docs(f2, "clusters/staging/lifecycle/node-agent.yaml")
         self.assertEqual(a1, a2)
 
+    def test_sync_order(self):
+        f = config.parse_text(TEXT)
+        ks = {d["metadata"]["name"]: d["spec"] for d in docs(f, "clusters/prod/flux-system/sync.yaml")[1:]}
+        self.assertEqual(ks["config"]["dependsOn"], [{"name": "operators"}])     # CRDs before CRs
+        self.assertEqual(ks["lifecycle"]["dependsOn"], [{"name": "config"}])     # CRs before the node rollout
+
     def test_kind(self):
         f = config.parse_text(TEXT)
         k = docs(f, "kind/prod.yaml")[0]
