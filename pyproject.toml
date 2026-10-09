@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gitops-gpu-fleet"
+version = "0.1.0"
+description = "GPU and Network Operator versions per cluster and node pool, promoted through waves with Flux (lab)"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = []
+
+[project.scripts]
+fleet = "fleet.cli:main"
+
+[tool.setuptools]
+packages = ["fleet"]

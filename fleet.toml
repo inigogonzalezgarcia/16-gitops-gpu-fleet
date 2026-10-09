@@ -1,0 +1,76 @@
+# The fleet in one file: which GPU/Network Operator release each cluster and node pool runs, and the
+# order in which a new release reaches them. `python -m fleet render` turns it into clusters/<name>/,
+# which Flux applies. Change versions here (or with `fleet start|promote|approve`), never in clusters/.
+
+[fleet]
+# A new release enters at the first wave and moves one wave at a time. A wave can never run a newer
+# release than the wave before it (`fleet check` fails), and `fleet gate` checks the live clusters
+# before a promotion.
+waves = ["staging", "prod/h100", "prod/a100"]
+helm_repository = "https://helm.ngc.nvidia.com/nvidia"
+
+# The rollout controller from repo 11 does the node-by-node driver rollout in each cluster. Its plan
+# is rendered from this file into the rollout-plan ConfigMap, so the plan comes from Git too.
+[lifecycle]
+repo = "https://github.com/inigogonzalezgarcia/11-gpu-fleet-lifecycle"
+commit = "a879ef993a3e4b1285225321f1e5bb7d90a9b77f"
+image = "gpu-lifecycle:a879ef9"
+validation_image = "busybox:1.37"
+bad_versions = ["595.91.07-lab-bad"]   # the lab node agent fails validation for these
+
+# Release sets, oldest first. Versions are the upstream ones: each chart's default driver and DOCA
+# driver. `drivers` is this fleet's own list of driver versions approved with the operator version,
+# not NVIDIA's support matrix.
+[[release]]
+name = "2026.07"
+gpu_operator = "v26.3.3"
+network_operator = "26.4.2"
+driver = "580.126.20"
+doca = "doca3.4.1-26.04-1.1.0.0-3"
+drivers = ["580.126.20"]
+
+[[release]]
+name = "2026.10"
+gpu_operator = "v26.7.1"
+network_operator = "26.7.0"
+driver = "595.91.07"
+doca = "doca3.5.0-26.07-0.7.7.0-0"
+drivers = ["580.126.20", "595.91.07"]
+
+[[release]]
+name = "2026.11-lab-bad"   # lab only: a driver build that fails validation, to show a halted rollout
+gpu_operator = "v26.7.1"
+network_operator = "26.7.0"
+driver = "595.91.07-lab-bad"
+doca = "doca3.5.0-26.07-0.7.7.0-0"
+drivers = ["580.126.20", "595.91.07", "595.91.07-lab-bad"]
+
+[[cluster]]
+name = "staging"
+pause_after_canary = false
+approved = ""
+
+[[cluster.pool]]
+name = "a100"
+nodes = 1
+release = "2026.07"
+
+[[cluster.pool]]
+name = "h100"
+nodes = 1
+release = "2026.07"
+
+[[cluster]]
+name = "prod"
+pause_after_canary = true   # a person approves each prod rollout after its canary, in Git
+approved = ""
+
+[[cluster.pool]]
+name = "h100"
+nodes = 2
+release = "2026.07"
+
+[[cluster.pool]]
+name = "a100"
+nodes = 2
+release = "2026.07"
