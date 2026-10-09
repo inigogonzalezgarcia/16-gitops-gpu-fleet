@@ -1,0 +1,79 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests (standard library only)
+        run: python -m unittest -v
+      - name: fleet.toml is valid and the waves are in order
+        run: python -m fleet check
+      - name: clusters/ and kind/ match fleet.toml
+        run: python -m fleet render --check
+      - name: Shell scripts
+        run: shellcheck -x -P SCRIPTDIR scripts/*.sh
+
+  validate:
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          source cluster/versions.env
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | sudo tar xz -C /usr/local/bin kubeconform
+          curl -fsSL "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin flux
+          pip install -q pyyaml
+          helm version --short; kubeconform -v; flux version --client
+      - name: helm template + kubeconform, what Git has now
+        run: bash scripts/validate.sh
+      - name: Every step of promoting 2026.10 through the waves
+        run: bash scripts/promotion-path.sh 2026.10
+      - name: A misspelt field is caught
+        run: |
+          mkdir -p out/typo && cp -r fleet.toml clusters out/typo/
+          sed -i 's/nodeSelector:/nodeSelecter:/' out/typo/clusters/prod/config/nvidiadrivers.yaml
+          if NO_RENDER_CHECK=1 bash scripts/validate.sh out/typo > out/typo.log 2>&1; then
+            cat out/typo.log; echo "the typo was not caught"; exit 1
+          fi
+          grep -m2 "nodeSelecter" out/typo.log
+
+  e2e:
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          source cluster/versions.env
+          curl -fsSLo /tmp/kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          sudo install -m 0755 /tmp/kind /usr/local/bin/kind
+          curl -fsSL "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin flux
+          kind version; flux version --client; kubectl version --client
+      - name: Lab (Git server, kind clusters, Flux, repo 11 controller)
+        run: bash scripts/up.sh
+      - name: Promotion through the waves
+        run: bash scripts/e2e.sh
+      - name: Report
+        if: always()
+        run: cat out/e2e-report.md 2>/dev/null | tee -a "$GITHUB_STEP_SUMMARY" || true
+      - name: Diagnostics
+        if: failure()
+        run: bash scripts/diagnose.sh
