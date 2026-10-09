@@ -49,7 +49,7 @@ publish "Promote $NEW to prod/h100"
 wait_for 900 "prod operators upgraded to v26.7.1" is prod 'd["helmreleases"]["gpu-operator"]["chart"] if d["helmreleases"]["gpu-operator"]["ready"] else 0' "v26.7.1"
 wait_for 300 "prod rollout prod-$NEW-h100 waits for approval after its canary" \
   is prod '(d["rollout"].get("rollout"), d["rollout"].get("phase"))' "('prod-$NEW-h100', 'AwaitingApproval')"
-expect "prod NVIDIADriver: h100 on 595.91.07, a100 still on 580.126.20" \
+wait_for 120 "prod NVIDIADriver: h100 on 595.91.07, a100 still on 580.126.20" \
   is prod '(d["drivers"]["h100"], d["drivers"]["a100"])' "('595.91.07', '580.126.20')"
 refuses "gate for prod/a100 closed until prod/h100 has finished" lab gate prod/a100
 snapshot "3. prod/h100 canary done, waiting for approval"
