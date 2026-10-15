@@ -112,7 +112,7 @@ Tool versions are pinned in [cluster/versions.env](cluster/versions.env): kind v
 
 Want to talk about GPU fleet upgrades, GitOps for clusters or a lab like this for your team? Get in touch:
 
-- Email: [inigogonzalezgarcia@yahoo.es](mailto:inigogonzalezgarcia@yahoo.es)
+- Website (contact form): [inigogonzalezgarcia.github.io](https://inigogonzalezgarcia.github.io/about.html#contacto)
 - LinkedIn: [linkedin.com/in/igonzalez93](https://www.linkedin.com/in/igonzalez93)
 
 ## License
