@@ -6,7 +6,7 @@ A fleet of GPU clusters upgraded from Git. One file says which **GPU Operator**,
 
 ![ci](https://github.com/inigogonzalezgarcia/16-gitops-gpu-fleet/actions/workflows/ci.yml/badge.svg)
 
-> A learning-in-public lab about upgrading GPU clusters with GitOps. I don't have production GPU fleet experience; this project is how I am learning the problem. Flux, the GPU Operator and the Network Operator are real (upstream releases and charts from NGC, on kind). The GPUs and NICs are not: the operators install and reconcile, but no driver or DOCA pod is ever scheduled, and repo 11's lab node agent pretends to install driver versions. The lab tests the GitOps flow, the order of changes and the CR schemas, not what a driver does on a node.
+> A lab on upgrading GPU clusters with GitOps, built on Git, CI/CD pipelines and release management. Flux, the GPU Operator and the Network Operator are real (upstream releases and charts from NGC, on kind). The GPUs and NICs are not: the operators install and reconcile, but no driver or DOCA pod is ever scheduled, and repo 11's lab node agent pretends to install driver versions. The lab tests the GitOps flow, the order of changes and the CR schemas, not what a driver does on a node.
 
 Eighth in a series: [09 – node remediation](https://github.com/inigogonzalezgarcia/09-gpu-node-remediation), [10 – fleet observability](https://github.com/inigogonzalezgarcia/10-gpu-fleet-observability), [11 – fleet lifecycle](https://github.com/inigogonzalezgarcia/11-gpu-fleet-lifecycle), [12 – goodput and MTBI](https://github.com/inigogonzalezgarcia/12-gpu-goodput-mtbi), [13 – cluster acceptance](https://github.com/inigogonzalezgarcia/13-cluster-acceptance-burnin), [14 – Slurm GPU operations](https://github.com/inigogonzalezgarcia/14-slurm-gpu-ops), [15 – multi-tenant GPU scheduling](https://github.com/inigogonzalezgarcia/15-multi-tenant-gpu-scheduling).
 
@@ -101,12 +101,12 @@ Tool versions are pinned in [cluster/versions.env](cluster/versions.env): kind v
 - [docs/design.md](docs/design.md): fleet, cluster and node layers; what Flux applies; operator values; the rollout plan; the gate; the lab
 - [docs/decisions.md](docs/decisions.md): Flux rather than Argo CD, a generator rather than overlays, what CI taught me, lab shortcuts, what is missing
 
-## Not tested here
+## Next steps
 
-- Real GPUs and NICs: no driver, toolkit or DOCA pod ever runs, and no node is drained for a real driver upgrade.
-- The GPU Operator's own driver upgrade controller (the usual choice with real GPUs); repo 11's controller does the node work here.
-- Argo CD, `flux bootstrap`, signed charts and images, a private registry mirror, Flux alerts.
-- More than one cluster per wave, maintenance windows per cluster.
+- Real GPUs and NICs, where the driver, toolkit and DOCA pods run and nodes are drained for each driver upgrade.
+- The GPU Operator's own driver upgrade controller (the usual choice with real GPUs); repo 11's controller does the node work in the lab.
+- Argo CD as an alternative, `flux bootstrap`, signed charts and images, a private registry mirror and Flux alerts.
+- More than one cluster per wave, and maintenance windows per cluster.
 
 ## Customisation and contact
 
